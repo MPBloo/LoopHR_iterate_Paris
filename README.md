@@ -1,99 +1,88 @@
-# SimpleMeet - AI-Powered Interview Platform
+Overview
 
-> A modern video conferencing platform designed specifically for consulting interviews, featuring real-time AI assistance, speech transcription, and interactive mini-games.
+This repository contains a real-time video interviewing platform built during a hackathon, designed to explore the behavior and limitations of LLM-based assistants in live, interactive settings.
+The system integrates video conferencing, real-time speech transcription, and multiple LLM-driven agents that suggest follow-up interview questions based on ongoing conversation context.
+Beyond the product itself, this project primarily served as a practical exploration of LLM reliability, relevance, and failure modes when deployed in dynamic, low-latency environments.
 
-## ✨ Features
+Motivation & Scope
 
-### 🎥 Video Conferencing
-- **WebRTC P2P Connection**: Direct peer-to-peer video and audio communication
-- **Real-time Controls**: Mute/unmute audio, enable/disable video, end call
-- **Picture-in-Picture**: Local video overlay with remote video full screen
-- **Liquid Glass UI**: Premium glassmorphic design with smooth animations
+LLMs are increasingly proposed as “assistants” for high-stakes human interactions (interviews, meetings, coaching).
+This project investigates a concrete instantiation of that idea:
+Can LLM-based agents meaningfully assist an interviewer in real time, without degrading interaction quality or introducing misleading suggestions?
+The goal was not to build a perfect AI interviewer, but to:
+observe how LLMs behave under tight time constraints, test whether contextual understanding holds over long conversations, identify practical failure modes beyond offline benchmarks.
 
-### 🤖 AI-Powered Interview Assistant (Interviewer Only)
-- **Deeper Agent** 🔍: Suggests follow-up questions to dig deeper into candidate answers
-- **NextQuestion Agent** ❓: Recommends the next logical question to ask
-- **Auto-Detection**: AI agents analyze conversation context every 5 seconds
-- **Smart Cooldown**: 60-second cooldown per agent to prevent spam
-- **Claude 4.5 Haiku**: Powered by Anthropic's latest AI model
+Key Observations & Lessons Learned
 
-### 🎤 Real-Time Transcription
-- **ElevenLabs STT**: High-quality speech-to-text transcription
-- **Dual Tracking**: Separate transcription for interviewer and candidate
-- **Auto-Disappear**: Transcription blocks fade after 30 seconds
-- **Historical Context**: Full conversation history stored for AI analysis
+Through development and testing, several limitations became apparent:
+Surface-level relevance : 
+Agent-generated follow-up questions are often plausible but shallow, especially as conversations grow longer.
+Context degradation : 
+Despite access to recent transcripts, suggestions lose coherence over time, leading to repetition or irrelevant probing.
+Latency vs reasoning trade-off : 
+Short inference budgets favor fluency over depth, making deeper analytical questioning unreliable in real time.
+Overconfidence and hallucination risk : 
+The system occasionally suggests questions based on incorrect or weakly inferred assumptions from prior answers.
 
-### 📋 Interview Guide Checklist
-- **Structured Questions**: Organized by category (Fit & Motivation, Behavioral, Analytical)
-- **Progress Tracking**: Check off questions as you ask them
-- **Key Questions Highlighted**: Special section for "Questions worth asking"
-- **Real-time Updates**: Questions automatically checked when detected in conversation
+Evaluation is hard : 
+Measuring “good” interview assistance is inherently subjective, making systematic evaluation challenging.
 
-### 🎮 Interactive Mini-Games
-- **Tic Tac Toe**: Built-in game synchronized between both participants
-- **Liquid Glass Design**: Beautiful animated popup with glassmorphic effects
-- **Real-time Sync**: Game state synchronized via Supabase
-- **Interviewer Controls**: Only interviewer can close the game for both participants
+These observations made me increasingly skeptical of claims around “AI interviewers” and motivated further interest in evaluation, reasoning robustness, and agent stability.
 
-## 🎨 Design Features
+System Description : 
 
-- **Glassmorphism**: Modern liquid glass aesthetic throughout the interface
-- **Gradient Backgrounds**: Dynamic animated gradients on homepage
-- **Smooth Animations**: Staggered fade-in and slide-in effects
-- **Responsive Design**: Optimized for desktop viewing
-- **Color-Coded Elements**: Blue for interviewer, purple/yellow for candidate
-- **Dark/Light Contrast**: Dark video area with light sidebar for optimal visibility
+The platform combines:
+Peer-to-peer video conferencing using WebRTC
+Real-time speech-to-text transcription for both participants
+LLM-based agents that periodically analyze conversational context and suggest follow-up questions
+A structured interview guide to anchor human decision-making
+Optional interactive elements (mini-games) to explore synchronization and shared state
+The AI components are intentionally constrained and cooldown-limited to reduce noise and over-intervention.
 
-## 🚀 Getting Started
+AI Agents (Design Intent) : 
+Two simple agents were implemented:
+Follow-up agent: suggests deeper questions based on recent answers
+Next-question agent: proposes a logical continuation within an interview structure
+Both agents operate on:
+short rolling context windows, periodic triggers rather than continuous streaming, explicit cooldowns to limit overuse.
+This design reflects an assumption that human judgment must remain central, with AI acting only as a weak signal.
 
-### Prerequisites
-- Node.js & npm ([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
-- ElevenLabs API key
-- Anthropic (Claude) API key
-- Supabase project
+Tech Stack
+Frontend: React 18, TypeScript, Vite
+Video: WebRTC (P2P via RTCPeerConnection)
+Realtime signaling & state: Supabase Realtime
+LLMs: Anthropic Claude (Haiku tier)
+Speech-to-text: ElevenLabs
+Styling: Tailwind CSS, shadcn/ui
 
-### Installation
 
-```sh
-# Clone the repository
-git clone <YOUR_GIT_URL>
 
-# Navigate to project directory
-cd loophr-main
+Limitations :
 
-# Install dependencies
-npm install
+This project leaves several questions open:
+How can we evaluate LLM assistance quality without leaking ground truth?
+Can reasoning depth be improved without increasing latency?
+Should planning and question generation be decoupled?
+How do we prevent conversational drift over long horizons?
+Are such assistants fundamentally better suited as offline tools?
+These questions are more interesting than the product itself.
 
-# Copy the sample environment file and fill in your secrets
-cp env.example .env
-# then edit .env to add your real keys
+Project Context: 
 
-# Start development server
-npm run dev
-```
+This project was developed during a hackathon and is not intended as a production-ready system.
+The code prioritizes clarity and experimentation over completeness or optimization.
 
-### Environment Variables
+Getting Started (Optional)
 
-The repository ships with an `env.example` file. Duplicate it (`cp env.example .env`) and fill in the values:
+(You can keep this section largely as-is; it’s secondary.)
 
-- `VITE_SUPABASE_URL` – your Supabase project URL
-- `VITE_SUPABASE_ANON_KEY` – the public anon/publishable key
-- `VITE_ELEVENLABS_API_KEY` – used for speech-to-text and scribe tokens
-- `VITE_ANTHROPIC_API_KEY` – Claude 3.5 Haiku access
-- Optional tuning knobs: `VITE_VOLUME_THRESHOLD`, `VITE_SILENCE_THRESHOLD`, `VITE_MIN_RECORDING_DURATION`
+[installation steps, env variables, etc.]
 
-Never commit the filled `.env` file—it's ignored by Git by default.
+Final Note
 
-## 🏗️ Tech Stack
+This repository reflects a hands-on exploration of LLM-based systems, not a claim of solved problems.
+Most value came from observing what does not work reliably — especially under real-time constraints.
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS with custom glassmorphic utilities
-- **Video**: WebRTC (RTCPeerConnection)
-- **Signaling**: Supabase Realtime
-- **AI**: Anthropic Claude 3.5 Haiku
-- **Transcription**: ElevenLabs Speech-to-Text
-- **UI Components**: shadcn/ui
-- **Routing**: React Router
 
 ## 📁 Project Structure
 
@@ -135,61 +124,4 @@ src/
 3. Participate in mini-games when launched
 4. Answer interview questions naturally
 
-## 🔐 Security & Privacy
 
-- **Secrets hygiene**: `.env` is ignored, and `env.example` documents every required variable
-- **P2P Connection**: Video/audio data transmitted directly between peers
-- **No Recording**: No persistent storage of video/audio streams
-- **Temporary Transcriptions**: Transcripts stored in memory, cleared after 30s display
-- **Secure API Keys**: All API keys stored as environment variables
-
-## 🤝 Contributing
-
-This project was built for a hackathon. Feel free to fork and adapt for your own needs!
-
-## 📝 License
-
-[Add your license here]
-
-## 🙏 Acknowledgments
-
-- **Anthropic**: Claude AI for intelligent interview assistance
-- **ElevenLabs**: High-quality speech-to-text transcription
-- **Supabase**: Real-time database and signaling
-- **shadcn/ui**: Beautiful UI components
-- **Tailwind CSS**: Utility-first CSS framework
-
-## ✅ Security Checklist Before Publishing
-
-- [ ] Have you duplicated `env.example` to `.env` locally instead of committing secrets?
-- [ ] Did you verify that no API keys or tokens are hard-coded in code or docs?
-- [ ] Are you using separate Supabase projects/keys for staging vs. production?
-- [ ] Have you reviewed `supabase/config.toml` to ensure it only contains non-sensitive metadata (project IDs are fine)?
-- [ ] Did you validate that CI/CD logs or deployment previews do not expose runtime environment variables?
-
----
-
-Built with ❤️ for better interviews
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/7f848c87-1933-4e42-99c5-5e4878cf1546) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
